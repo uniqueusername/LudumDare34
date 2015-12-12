@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Ludum Dare 34</title>
+    <script type="text/javascript" src="scripts/phaser.min.js"></script>
+    <style type="text/css">
+      body {
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <script type="text/javascript">
+
+var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+
+var knife;
+var player;
+var enemies;
+
+function preload() {
+  // loading sprites
+  game.load.image('player', 'assets/player.png');
+  game.load.image('knifeEnemy', 'assets/knife.png');
+
+}
+
+function create() {
+  // starting physics
+  game.physics.startSystem(Phaser.Physics.ARCADE);
+
+  setInterval(function(){createEnemy()}, 250);
+
+  // creating the player sprite
+  player = game.add.sprite(32, 150, 'player');
+
+  // creating enemies group
+  enemies = game.add.group();
+
+  // enabling physics for enemies group
+  enemies.enableBody = true;
+
+  // creating the enemy sprite
+  knife = enemies.create(Math.random() * 1000, -32, 'knifeEnemy');
+
+  // enable physics on the player
+  game.physics.arcade.enable(player);
+
+  // player physics properties
+  player.body.gravity.y = 300;
+  player.body.collideWorldBounds = true;
+
+  cursors = game.input.keyboard.createCursorKeys();
+
+}
+
+function update() {
+
+  //  Reset the players velocity (movement)
+  player.body.velocity.x = 0;
+
+  // kill player on contact with enemy
+  game.physics.arcade.overlap(player, enemies, gameOver, null, this)
+
+  if (cursors.left.isDown)
+  {
+      //  Move to the left
+      player.body.velocity.x = -450;
+
+      player.animations.play('left');
+  }
+  else if (cursors.right.isDown)
+  {
+      //  Move to the right
+      player.body.velocity.x = 450;
+
+      player.animations.play('right');
+  }
+
+}
+
+function gameOver() {
+
+  player.kill();
+  alert("You are ded");
+
+}
+
+function createEnemy() {
+
+  enemyPosition = Math.random() * 1000;
+
+  if (enemyPosition < 800) {
+    // creating an enemy
+    knife = enemies.create(Math.random() * 1000, -32, 'knifeEnemy');
+
+    // enemy physics properties
+    knife.body.gravity.y = 150;
+
+  }
+
+}
+
+    </script>
+  </body>
+</html>

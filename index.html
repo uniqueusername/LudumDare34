@@ -12,36 +12,67 @@
   <body>
     <script type="text/javascript">
 
-var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update, render: render });
 
 var knife;
+var fruit;
 var player;
 var enemies;
+var fruits;
+var playerSize = 0;
+var score = 0;
+
+var instructionText;
+var statusText;
+
+var enemyTextures = ["knifeEnemy", "potEnemy"];
+var fruitTextures = ["fruit1", "pineappleFruit", "orangeFruit", "pearFruit"];
+
+var enemyTimer;
 
 function preload() {
   // loading sprites
   game.load.image('player', 'assets/player.png');
   game.load.image('knifeEnemy', 'assets/knife.png');
+  game.load.image('potEnemy', 'assets/pot.png');
+  game.load.image('pineappleFruit', 'assets/pineapple.png');
+  game.load.image('orangeFruit', 'assets/orange.png');
+  game.load.image('pearFruit', 'assets/pear.png');
+  game.load.image('fruit1', 'assets/apple.png');
+  game.load.image('playerlevel2', 'assets/playerlvl2.png');
+  game.load.image('playerlevel3', 'assets/playerlvl3.png');
 
 }
 
 function create() {
+
+  game.world.setBounds(0, 0, 2400, 600);
+
   // starting physics
   game.physics.startSystem(Phaser.Physics.ARCADE);
 
-  setInterval(function(){createEnemy()}, 250);
+  enemyTimer = setInterval(function(){createEnemy()}, 250);
+  setInterval(function(){createFruit()}, 1100);
+
+  // display instructions
+  statusText = game.add.text(260, 250, 'Catch fruit to grow bigger.', { fontSize: '32px', fill: 'cyan' });
+  instructionText = game.add.text(260, 272, "Don't touch pots or knives", { fontSize: '32px', fill: 'cyan' });
 
   // creating the player sprite
   player = game.add.sprite(32, 150, 'player');
+  player.scale.setTo(0.1, 0.1);
 
-  // creating enemies group
+  // creating enemies and fruits group
   enemies = game.add.group();
+  fruits = game.add.group();
 
-  // enabling physics for enemies group
+  // enabling physics for enemies and fruits group
   enemies.enableBody = true;
+  fruits.enableBody = true;
 
-  // creating the enemy sprite
+  // creating the enemy and fruit sprite
   knife = enemies.create(Math.random() * 1000, -32, 'knifeEnemy');
+  fruit = fruits.create(Math.random() * 1000, -32, 'fruit1');
 
   // enable physics on the player
   game.physics.arcade.enable(player);
@@ -52,6 +83,8 @@ function create() {
 
   cursors = game.input.keyboard.createCursorKeys();
 
+  game.camera.follow(player);
+
 }
 
 function update() {
@@ -60,7 +93,14 @@ function update() {
   player.body.velocity.x = 0;
 
   // kill player on contact with enemy
-  game.physics.arcade.overlap(player, enemies, gameOver, null, this)
+  game.physics.arcade.overlap(player, enemies, gameOver, null, this);
+
+  // grow player on contact with fruit
+  game.physics.arcade.overlap(player, fruits, growPlayer, null, this);
+
+  if (playerSize != 0) {
+    player.scale.setTo(playerSize / 10, playerSize / 10);
+  }
 
   if (cursors.left.isDown)
   {
@@ -79,23 +119,66 @@ function update() {
 
 }
 
+function render() {
+
+	//game.debug.cameraInfo(game.camera, 32, 32);
+	//game.debug.spriteCoords(player, 32, 500);
+
+}
+
+function growPlayer() {
+
+  fruit.kill();
+  playerSize++;
+  score++;
+  clearInterval(enemyTimer);
+  setInterval(function(){createEnemy()}, playerSize * 300);
+
+}
+
 function gameOver() {
 
   player.kill();
-  alert("You are ded");
+  instructionText.text = '';
+  statusText.text = 'YOU ARE DEAD';
+  statusText.fontSize = '200px';
+
+  alert("SCORE: " + score);
+
+}
+
+function createFruit() {
+
+  fruitPosition = Math.random() * 3000;
+
+  if (fruitPosition < 2400) {
+    // creating a fruit
+    fruit = fruits.create(Math.random() * 3000, -32, 'fruit1');
+
+    // fruit physics properties
+    fruit.body.gravity.y = 100;
+
+    // load random texture
+    fruit.loadTexture(fruitTextures[Math.floor(Math.random()*fruitTextures.length)]);
+
+  }
 
 }
 
 function createEnemy() {
 
-  enemyPosition = Math.random() * 1000;
+  enemyPosition = Math.random() * 3000;
 
-  if (enemyPosition < 800) {
+  if (enemyPosition < 2400) {
     // creating an enemy
-    knife = enemies.create(Math.random() * 1000, -32, 'knifeEnemy');
+    knife = enemies.create(Math.random() * 3000, -32, 'knifeEnemy');
 
     // enemy physics properties
     knife.body.gravity.y = 150;
+    score++;
+
+    // load random texture
+    knife.loadTexture(enemyTextures[Math.floor(Math.random()*enemyTextures.length)]);
 
   }
 
